@@ -41,7 +41,7 @@ void linRegress (double x[], double y[], int n, double *a1, double *a0, double *
     *r2 = (st - sr) / st;
 }
 
-void polyRegress(double x[], double y[], int order, int n, double a[order + 1][order + 2], double *syx, double *r2, FILE *output_file) {
+void polyRegress(double x[], double y[], int order, int n, double a[order + 1][order + 2], double *syx, double *r2, FILE *output_file, double x_pred) {
     fprintf(output_file, "Iteration, x, y, y_pred, MSE\n");
 
     double coeffs[order + 1], st, sr, sum_y;
@@ -79,12 +79,18 @@ void polyRegress(double x[], double y[], int order, int n, double a[order + 1][o
         st += (y[i] - ymean) * (y[i] - ymean);
         sr += (y[i] - y_pred) * (y[i] - y_pred);
     }
+    double y_pred = 0;
+    fprintf(output_file, "\n\n");
+    for (j = 0; j <= order; j++) {
+            y_pred += coeffs[j] * pow(x_pred, j);
+    }
+    fprintf(output_file, "%.2f,%.2f\n", x_pred, y_pred);
     
     *syx = sqrt(sr / (n - order - 1));
     *r2 = (st - sr) / st;
 }
 
-void multiRegress (double x[][MAXORDER], double y[], int order, double a[][order+2], int n, double *syx, double *r2, FILE *output_file) {
+void multiRegress (double x[][MAXORDER], double y[], int order, double a[][order+2], int n, double *syx, double *r2, FILE *output_file, double x_pred) {
 	int i, j, k;
     fprintf(output_file, "Iteration,");
     for (i = 1; i <= order; i++) {
@@ -128,6 +134,7 @@ void multiRegress (double x[][MAXORDER], double y[], int order, double a[][order
         st += (y[i] - ymean) * (y[i] - ymean);
         sr += (y[i] - y_pred) * (y[i] - y_pred);
     }
+    
     *syx = sqrt(sr / (n - order - 1));
     *r2 = (st - sr) / st;
 }
@@ -149,6 +156,7 @@ int readDataRegresi(char *filename, double x[], double y[], int *n) {
             if (token != NULL) {
                 x[count] = atof(token);
                 token = strtok(NULL, ",");
+                token = strtok(NULL, ",");
                 if (token != NULL) {
                     y[count] = atof(token);
                     count++;
@@ -161,6 +169,7 @@ int readDataRegresi(char *filename, double x[], double y[], int *n) {
         char* token = strtok(line, ",");
         if (token != NULL) {
             x[count] = atof(token);
+            token = strtok(NULL, ",");
             token = strtok(NULL, ",");
             if (token != NULL) {
                 y[count] = atof(token);
@@ -233,7 +242,7 @@ int readDataMultiple(char *filename, double x[][MAXORDER], double y[], int max_s
 int main() {
     int i, j;
     FILE *output_file;
-    output_file = fopen("TugasPemrograman4_nomor1.csv", "w");
+    output_file = fopen("hasil_Regresi_persentase.csv", "w");
     if (output_file == NULL) {
         printf("Error opening file!\n");
         return 1;
@@ -243,25 +252,28 @@ int main() {
     double x_linear[MAX], y_linear[MAX];
     double x_polynomial[MAX], y_polynomial[MAX];
     double x_multi[MAX][MAXORDER], y_multi[MAX];
+    double populasi[MAX];
     
     // Declare variables to hold the number of data points
     int n_linear_count;
     int n_poly_count;
+    int order;
     
     // Membaca data untuk regresi linear
-    n_linear_count = readDataRegresi("data_linear.csv", x_linear, y_linear, &n_linear_count);
+    n_linear_count = readDataRegresi("Data Tugas Pemrograman A.csv", x_linear, y_linear, &n_linear_count);
     if (n_linear_count <= 0) {
         printf("Failed to read linear regression data!\n");
         return 1;
     }
     
     // Membaca data untuk regresi polinomial
-    n_poly_count = readDataRegresi("data_polynomial.csv", x_polynomial, y_polynomial, &n_poly_count);
+    n_poly_count = readDataRegresi("Data Tugas Pemrograman A.csv", x_polynomial, y_polynomial, &n_poly_count);
     if (n_poly_count <= 0) {
         printf("Failed to read polynomial regression data!\n");
         return 1;
     }
     
+    /*
     // Membaca data untuk regresi berganda
     int order = 2; // Order sesuai dengan kebutuhan
     int n_multi_count;
@@ -270,9 +282,10 @@ int main() {
         printf("Failed to read multiple regression data!\n");
         return 1;
     }
+    */
     
     // Process the read data using the correct count variables
-    double a1, a0, syx, r2;
+    double a1, a0, syx, r2, x_pred;
     double a[MAXORDER][MAXORDER + 2];
 
     // Linear Regression
@@ -280,37 +293,41 @@ int main() {
     linRegress(x_linear, y_linear, n_linear_count, &a1, &a0, &syx, &r2, output_file);
     if (a0 < 0) {
     	a0 *= -1;
-    	fprintf(output_file, "\nf(x) = %.6fx - %.6f\n syx, %.6f\n r2, %.6f\n\n\n", a1, a0, syx, r2);
+    	fprintf(output_file, "\nf(x) = %.4fx - %.4f\n syx, %.4f\n r2, %.4f\n\n\n", a1, a0, syx, r2);
 	} else {
-		fprintf(output_file, "\nf(x) = %.6fx + %.6f\n syx, %.6f\n r2, %.6f\n\n\n", a1, a0, syx, r2);
+		fprintf(output_file, "\nf(x) = %.4fx + %.4f\n syx, %.4f\n r2, %.4f\n\n\n", a1, a0, syx, r2);
 	}
     
     // Polynomial Regression
-    fprintf(output_file, "Polynomial Regression:\n");
-    polyRegress(x_polynomial, y_polynomial, order, n_poly_count, a, &syx, &r2, output_file);
-    double coeffs[order + 1];  // Array untuk menyimpan koefisien regresi
-    gaussElimination(order, a, coeffs);
-    fprintf(output_file, "\nOrder, %d\nf(x) = ", order);
-    for (i = order; i > 0; i--) {
-    	if (i == order) {
-    		fprintf(output_file, "%.6fx^%d ", coeffs[i], i);
-		} else {
-			if (coeffs[i] < 0) {
-	    		coeffs[i] *= -1;
-	    		fprintf(output_file, "- %.6fx^%d ", coeffs[i], i);
-	    	} else {
-	    		fprintf(output_file, "+ %.6fx^%d ", coeffs[i], i);
+    for (order=2; order <= 3; order++){
+    	fprintf(output_file, "Polynomial Regression:\n");
+	    polyRegress(x_polynomial, y_polynomial, order, n_poly_count, a, &syx, &r2, output_file, x_pred);
+	    double coeffs[order + 1];  // Array untuk menyimpan koefisien regresi
+	    gaussElimination(order, a, coeffs);
+	    fprintf(output_file, "\nOrder, %d\nf(x) = ", order);
+	    for (i = order; i > 0; i--) {
+	    	if (i == order) {
+	    		fprintf(output_file, "%.4fx^%d ", coeffs[i], i);
+			} else {
+				if (coeffs[i] < 0) {
+		    		coeffs[i] *= -1;
+		    		fprintf(output_file, "- %.4fx^%d ", coeffs[i], i);
+		    	} else {
+		    		fprintf(output_file, "+ %.4fx^%d ", coeffs[i], i);
+				}
 			}
+	    	
 		}
-    	
+		if (coeffs[0] < 0) {
+	    	coeffs[0] *= -1;
+	    	fprintf(output_file, "- %.4f\n syx, %.4f\n r2, %.4f\n\n\n", coeffs[0], syx, r2);
+	    } else {
+	    	fprintf(output_file, "+ %.4f\n syx, %.4f\n r2, %.4f\n\n\n", coeffs[0], syx, r2);	
+		}
 	}
-	if (coeffs[0] < 0) {
-    	coeffs[0] *= -1;
-    	fprintf(output_file, "- %.6f\n syx, %.6f\n r2, %.6f\n\n\n", coeffs[0], syx, r2);
-    } else {
-    	fprintf(output_file, "+ %.6f\n syx, %.6f\n r2, %.6f\n\n\n", coeffs[0], syx, r2);	
-	}
+    
 
+	/*
     // Multiple Regression
     fprintf(output_file, "Multiple Regression:\n");
     multiRegress(x_multi, y_multi, order, a, n_multi_count, &syx, &r2, output_file);
@@ -318,23 +335,24 @@ int main() {
     fprintf(output_file, "\nOrder, %d\nf(x) = ", order);
     for (i = order; i > 0; i--) {
     	if (i == order) {
-    		fprintf(output_file, "%.6fx%d ", coeffs[i], i);
+    		fprintf(output_file, "%.4fx%d ", coeffs[i], i);
 		} else {
 			if (coeffs[i] < 0) {
 	    		coeffs[i] *= -1;
-	    		fprintf(output_file, "- %.6fx%d ", coeffs[i], i);
+	    		fprintf(output_file, "- %.4fx%d ", coeffs[i], i);
 	    	} else {
-	    		fprintf(output_file, "+ %.6fx%d ", coeffs[i], i);
+	    		fprintf(output_file, "+ %.4fx%d ", coeffs[i], i);
 			}
 		}
     	
 	}
 	if (coeffs[0] < 0) {
     	coeffs[0] *= -1;
-    	fprintf(output_file, "- %.6f\n syx, %.6f\n r2, %.6f\n\n\n", coeffs[0], syx, r2);
+    	fprintf(output_file, "- %.4f\n syx, %.4f\n r2, %.4f\n\n\n", coeffs[0], syx, r2);
     } else {
-    	fprintf(output_file, "+ %.6f\n syx, %.6f\n r2, %.6f\n\n\n", coeffs[0], syx, r2);	
+    	fprintf(output_file, "+ %.4f\n syx, %.4f\n r2, %.4f\n\n\n", coeffs[0], syx, r2);	
 	}
+	*/
     fclose(output_file);
     return 0;
 }

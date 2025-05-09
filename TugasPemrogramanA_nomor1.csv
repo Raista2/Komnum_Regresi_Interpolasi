@@ -1,0 +1,16 @@
+Cubic Spline Interpolation for Population Missing Years
+
+Year,Predicted Population,Growth Rate,Acceleration
+2005,230231388,4529624.98,-1100490.70
+2006,234397598,3989624.46,20489.66
+2015,261404102,3349467.63,-643729.56
+2016,264472608,2828447.98,-398309.74
+
+
+Cubic Spline Interpolation for Internet Usage Percentage
+
+Year,Predicted Percentage,Rate of Change,Acceleration
+2005,39.03,-67.49,59.61
+2006,0.00,-31.13,13.11
+2015,100.00,-172.82,155.19
+2016,0.00,-77.80,34.84
