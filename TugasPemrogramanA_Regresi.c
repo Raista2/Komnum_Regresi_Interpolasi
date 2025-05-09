@@ -233,7 +233,7 @@ int readDataMultiple(char *filename, double x[][MAXORDER], double y[], int max_s
 int main() {
     int i, j;
     FILE *output_file;
-    output_file = fopen("TugasPemrograman4_nomor1_Salim_2306204604.csv", "w");
+    output_file = fopen("TugasPemrograman4_nomor1.csv", "w");
     if (output_file == NULL) {
         printf("Error opening file!\n");
         return 1;

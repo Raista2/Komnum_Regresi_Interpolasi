@@ -89,7 +89,7 @@ int readData(char *filename, double x[], double y[], int *n) {
 void main() {
     int i, n;
     double x[100], y[100], yint[100], ea[100], xi, dy, d2y;
-    FILE *output_file = fopen("TugasPemrograman4_nomor2_Salim_2306204604.csv", "w");
+    FILE *output_file = fopen("TugasPemrograman4_nomor2.csv", "w");
     if (output_file == NULL) {
         printf("Error opening file!\n");
         return;
